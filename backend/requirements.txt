@@ -1,0 +1,25 @@
+# Core
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-multipart>=0.0.6
+
+# AI - Gemini (MLH Challenge)
+google-generativeai>=0.4.0
+
+# Database - MongoDB Atlas (MLH Challenge)
+pymongo>=4.6.0
+motor>=3.3.0
+
+# PDF Processing
+pymupdf>=1.23.0
+rendercv>=1.10
+
+# Web Scraping
+httpx>=0.26.0
+trafilatura>=1.8.0
+beautifulsoup4>=4.12.0
+
+# Voice - ElevenLabs (Stretch)
+elevenlabs>=1.0.0
