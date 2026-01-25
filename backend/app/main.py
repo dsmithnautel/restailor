@@ -15,7 +15,6 @@ app = FastAPI(
 )
 
 # CORS middleware for frontend
-# Log CORS origins for debugging
 print(f"CORS origins configured: {cors_origins}")
 
 app.add_middleware(
