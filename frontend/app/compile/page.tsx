@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Loader2, Link as LinkIcon, FileText, AlertCircle } from "lucide-react";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { parseJobDescription, compileResume, type ParsedJD, type CompileResponse } from "@/lib/api";
 
-export default function CompilePage() {
+function CompilePageContent() {
   const searchParams = useSearchParams();
   const masterVersion = searchParams.get("version");
 
@@ -279,5 +279,17 @@ export default function CompilePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CompilePage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8 px-4 flex justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    }>
+      <CompilePageContent />
+    </Suspense>
   );
 }
