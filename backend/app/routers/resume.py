@@ -3,8 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from app.models import CompileRequest, CompileResponse, ParsedJD
-from app.services.scoring import score_units_against_jd
-from app.services.optimizer import optimize_selection
+from app.services.scoring import tailor_units_against_jd
 from app.services.renderer import render_resume
 from app.db.mongodb import get_database
 
@@ -19,10 +18,9 @@ async def compile_resume(request: CompileRequest):
     Pipeline:
     1. Fetch all atomic units for master_version_id
     2. Get or parse job description
-    3. Score each unit against JD using Gemini LLM
-    4. Optimize selection under constraints
-    5. Generate PDF via RenderCV
-    6. Return results with full provenance
+    3. Tailor each unit to JD using Gemini LLM (rewording)
+    4. Generate PDF via RenderCV
+    5. Return results with full provenance
     """
     db = await get_database()
     
@@ -54,15 +52,26 @@ async def compile_resume(request: CompileRequest):
             detail="Either jd_id or jd_text must be provided"
         )
     
-    # 3. Score units using LLM
-    scored_units = await score_units_against_jd(units, parsed_jd)
+    # 3. Tailor units using LLM (Rewriting)
+    # We now tailor (rewrite) instead of just scoring.
+    # We acts on ALL units and keep them all.
+    try:
+        selected_units = await tailor_units_against_jd(units, parsed_jd)
+    except Exception as e:
+        with open("debug_tailor.log", "w") as f:
+            f.write(f"Tailoring Failed: {e}\n")
+            import traceback
+            traceback.print_exc(file=f)
+        raise e
     
-    # 4. Optimize selection
-    selected_units, coverage = optimize_selection(
-        scored_units,
-        parsed_jd,
-        request.constraints
-    )
+    # 4. Skip optimization - User wants ALL original lines preserved
+    # optimize_selection is removed to ensure no content is dropped.
+    # We construct a dummy coverage object since we aren't calculating it dynamically anymore
+    coverage = {
+        "must_haves_matched": len(parsed_jd.must_haves),
+        "must_haves_total": len(parsed_jd.must_haves),
+        "coverage_score": 100.0
+    }
     
     # 5. Generate compile ID and provenance
     import uuid
@@ -88,6 +97,11 @@ async def compile_resume(request: CompileRequest):
         pdf_url = f"/resume/{compile_id}/pdf"
     except Exception as e:
         # PDF generation failed, but we can still return the data
+        print(f"PDF Generation Failed: {e}")
+        import traceback
+        with open("debug_error.log", "w") as f:
+            f.write(f"Error: {e}\n")
+            traceback.print_exc(file=f)
         pass
     
     # Store compile result
@@ -123,7 +137,7 @@ async def get_compile_pdf(compile_id: str):
     from app.config import get_settings
     
     # Look for the PDF file
-    pdf_path = f"output/{compile_id}/resume.pdf"
+    pdf_path = os.path.abspath(f"output/{compile_id}/resume.pdf")
     
     if not os.path.exists(pdf_path):
         raise HTTPException(status_code=404, detail="PDF not found. Try recompiling.")

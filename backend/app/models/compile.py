@@ -37,6 +37,8 @@ class ScoredUnit(BaseModel):
     section: str
     org: Optional[str] = None
     role: Optional[str] = None
+    dates: Optional[dict] = None
+    tags: Optional[dict] = None
     llm_score: float = Field(..., ge=0, le=10)
     matched_requirements: list[str] = Field(default_factory=list)
     reasoning: str = ""

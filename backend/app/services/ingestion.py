@@ -70,7 +70,8 @@ async def ingest_pdf(pdf_content: bytes, filename: str) -> MasterResumeResponse:
     """
     # Generate version ID
     content_hash = hashlib.sha256(pdf_content).hexdigest()[:12]
-    version_id = f"master_{datetime.now().strftime('%Y%m%d')}_{content_hash}"
+    # Add timestamp to allow multiple uploads of same file for debugging
+    version_id = f"master_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{content_hash}"
     
     # Extract text from PDF
     doc = fitz.open(stream=pdf_content, filetype="pdf")
