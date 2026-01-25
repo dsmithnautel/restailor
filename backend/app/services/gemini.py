@@ -73,7 +73,7 @@ IMPORTANT: Respond ONLY with valid JSON. No markdown, no explanation, just the J
             await _rate_limit()
             
             response = client.models.generate_content(
-                model="gemini-1.5-flash",  # Using 1.5-flash for better free tier limits
+                model="gemini-2.0-flash",  # Using 1.5-flash for better free tier limits
                 contents=full_prompt
             )
             text = response.text.strip()
