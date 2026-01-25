@@ -132,7 +132,7 @@ async def generate_text(prompt: str, max_retries: int = 3) -> str:
             await _rate_limit()
             
             response = client.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.0-flash",
                 contents=prompt
             )
             return response.text

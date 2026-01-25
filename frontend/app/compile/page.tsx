@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Loader2, Link as LinkIcon, FileText, AlertCircle } from "lucide-react";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { parseJobDescription, compileResume, type ParsedJD, type CompileResponse } from "@/lib/api";
 
-function CompileContent() {
+function CompilePageContent() {
   const searchParams = useSearchParams();
   const masterVersion = searchParams.get("version");
 
@@ -56,7 +56,7 @@ function CompileContent() {
       const result = await compileResume(masterVersion, parsedJD.jd_id);
       setCompileResult(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to compile resume");
+      setError(err instanceof Error ? err.message : "Failed to tailor resume");
     } finally {
       setIsCompiling(false);
     }
@@ -69,7 +69,7 @@ function CompileContent() {
         <Card className="max-w-2xl mx-auto text-center">
           <CardContent className="pt-6">
             <div className="text-green-600 text-6xl mb-4">✓</div>
-            <h2 className="text-2xl font-bold mb-2">Resume Compiled!</h2>
+            <h2 className="text-2xl font-bold mb-2">Resume Tailored!</h2>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
               Selected {compileResult.selected_units.length} bullets with{" "}
               {Math.round(compileResult.coverage.coverage_score * 100)}% requirement coverage.
@@ -91,10 +91,10 @@ function CompileContent() {
       {/* Header */}
       <div className="mb-8">
         <Link href="/vault" className="text-blue-600 hover:underline text-sm mb-2 inline-block">
-          &larr; Back to Vault
+          &larr; Back to Upload
         </Link>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Compile Resume
+          Add Job Description
         </h1>
         <p className="text-gray-600 dark:text-gray-300 mt-2">
           Paste a job description to tailor your resume.
@@ -109,7 +109,7 @@ function CompileContent() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
               <AlertCircle className="w-5 h-5" />
-              <span>No master resume selected.</span>
+              <span>No resume uploaded.</span>
               <Link href="/vault" className="underline">Upload one first.</Link>
             </div>
           </CardContent>
@@ -266,11 +266,11 @@ function CompileContent() {
               {isCompiling ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Compiling...
+                  Tailoring...
                 </>
               ) : (
                 <>
-                  Compile Resume
+                  Tailor My Resume
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -286,6 +286,12 @@ export default function CompilePage() {
   return (
     <Suspense fallback={<div className="container mx-auto py-8 px-4">Loading...</div>}>
       <CompileContent />
+    <Suspense fallback={
+      <div className="container mx-auto py-8 px-4 flex justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    }>
+      <CompilePageContent />
     </Suspense>
   );
 }
