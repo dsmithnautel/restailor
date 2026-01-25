@@ -284,8 +284,6 @@ function CompilePageContent() {
 
 export default function CompilePage() {
   return (
-    <Suspense fallback={<div className="container mx-auto py-8 px-4">Loading...</div>}>
-      <CompileContent />
     <Suspense fallback={
       <div className="container mx-auto py-8 px-4 flex justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
