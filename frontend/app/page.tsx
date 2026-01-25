@@ -223,9 +223,9 @@ const faqItems = [
       "We only use content that already exists in your uploaded resume. Every bullet point in your tailored resume can be traced back to an exact line in your original document. We never generate, invent, or embellish any experience.",
   },
   {
-    question: "What does 'provenance per bullet' mean?",
+    question: "What does 'source tracking' mean?",
     answer:
-      "Provenance means origin tracking. For every bullet we include in your tailored resume, you can click 'View source' to see exactly where it came from in your original resume—including the page number and line number.",
+      "For every bullet we include in your tailored resume, you can click 'View source' to see exactly where it came from in your original resume, including the page number and line number. This proves nothing was invented.",
   },
   {
     question: "Is my resume data stored or shared?",
@@ -240,7 +240,7 @@ const faqItems = [
   {
     question: "What file formats are supported?",
     answer:
-      "We currently support PDF uploads for your master resume. The exported tailored resume is also delivered as a PDF optimized for ATS systems.",
+      "We currently support PDF uploads. The exported tailored resume is also delivered as a PDF optimized for ATS systems.",
   },
   {
     question: "Is Resume.compile() really free?",
@@ -343,7 +343,7 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-2">
                 <Eye className="w-4 h-4 text-primary" />
-                <span>Full provenance tracking</span>
+                <span>Full source tracking</span>
               </div>
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-primary" />
@@ -363,7 +363,7 @@ export default function Home() {
             <AnimatedSection className="text-center mb-16">
               <h2 className="text-h2 text-foreground">How it works</h2>
               <p className="mt-3 text-body-sm text-muted-foreground max-w-2xl mx-auto">
-                Two inputs converge into one tailored resume — with full provenance
+                Two inputs converge into one tailored resume, every bullet traceable
               </p>
             </AnimatedSection>
 
@@ -383,7 +383,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Provenance Spotlight */}
+        {/* Source Tracking Spotlight */}
         <section className="py-section-lg px-6">
           <div className="container">
             <AnimatedSection className="text-center mb-16">
@@ -490,7 +490,7 @@ export default function Home() {
               {[
                 {
                   icon: <Link2 className="w-5 h-5" />,
-                  title: "Provenance per bullet",
+                  title: "Source links per bullet",
                   description:
                     "Every bullet links back to the exact line in your original resume. No guessing where content came from.",
                   highlight: true,
