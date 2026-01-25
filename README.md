@@ -164,10 +164,6 @@ We only use content that already exists in your uploaded resume. Every bullet po
 
 For every bullet we include in your tailored resume, you can click 'View source' to see exactly where it came from in your original resume, including the page number and line number. This proves nothing was invented.
 
-### Is my resume data stored or shared?
-
-Your resume is processed in-memory and not stored permanently. We do not share your data with third parties. You can read our full privacy policy for details.
-
 ### Do I need to create an account?
 
 No. Resume.compile() works without sign-up. Just upload your resume, paste a job description, and export your tailored PDF immediately.
