@@ -13,7 +13,19 @@ async def get_database() -> AsyncIOMotorDatabase:
     
     if _db is None:
         settings = get_settings()
-        _client = AsyncIOMotorClient(settings.mongodb_uri)
+        # Fix for macOS SSL certificate verification
+        mongodb_uri = settings.mongodb_uri
+        
+        # Add SSL parameters to URI if not present
+        if 'tlsAllowInvalidCertificates' not in mongodb_uri:
+            separator = '&' if '?' in mongodb_uri else '?'
+            mongodb_uri = f"{mongodb_uri}{separator}tlsAllowInvalidCertificates=true"
+        
+        _client = AsyncIOMotorClient(
+            mongodb_uri,
+            tlsAllowInvalidCertificates=True,  # Required for macOS Python 3.13
+            serverSelectionTimeoutMS=5000  # Faster timeout for debugging
+        )
         _db = _client[settings.mongodb_database]
         
         # Ensure indexes
