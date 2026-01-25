@@ -1,34 +1,32 @@
-"""Quick MongoDB connection test."""
+import asyncio
 import os
-from dotenv import load_dotenv
-from pymongo import MongoClient
+from app.db.mongodb import get_database, close_database
+from app.config import get_settings
 
-load_dotenv()
+async def test_connection():
+    print("Testing MongoDB connection...")
+    try:
+        settings = get_settings()
+        # Print masked URI to verify it's loaded
+        masked_uri = settings.mongodb_uri.replace(settings.mongodb_uri.split("@")[0], "mongodb+srv://***:***") if "@" in settings.mongodb_uri else "mongodb://localhost..."
+        print(f"Using URI: {masked_uri}")
+        
+        db = await get_database()
+        print("Database instance retrieved.")
+        
+        # Try a simple command
+        print("Pinging database...")
+        # Since AsyncIOMotorDatabase doesn't have command directly accessible in the same way as PyMongo,
+        # we can list collection names or check a collection.
+        # But usually client.admin.command('ping') is the way.
+        # Let's try listing collections as a simple read op.
+        collections = await db.list_collection_names()
+        print(f"Connection successful! Collections: {collections}")
+        
+    except Exception as e:
+        print(f"Connection failed: {e}")
+    finally:
+        await close_database()
 
-uri = os.getenv("MONGODB_URI")
-db_name = os.getenv("MONGODB_DATABASE", "resume_compile")
-
-print(f"Testing connection to: {uri[:50]}...")
-print(f"Database: {db_name}")
-
-try:
-    client = MongoClient(uri, serverSelectionTimeoutMS=5000)
-    
-    # Force a connection attempt
-    client.admin.command('ping')
-    print("[OK] Connected successfully!")
-    
-    # List databases
-    dbs = client.list_database_names()
-    print(f"Available databases: {dbs}")
-    
-    # Check our database
-    db = client[db_name]
-    collections = db.list_collection_names()
-    print(f"Collections in '{db_name}': {collections}")
-    
-    client.close()
-    print("[OK] Connection test passed!")
-    
-except Exception as e:
-    print(f"[FAILED] Connection failed: {e}")
+if __name__ == "__main__":
+    asyncio.run(test_connection())
