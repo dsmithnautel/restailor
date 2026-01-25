@@ -1,5 +1,8 @@
 # Resume.compile()
 
+[![CI](https://github.com/dsmithnautel/restailor/actions/workflows/ci.yml/badge.svg)](https://github.com/dsmithnautel/restailor/actions/workflows/ci.yml)
+[![CD](https://github.com/dsmithnautel/restailor/actions/workflows/cd.yml/badge.svg)](https://github.com/dsmithnautel/restailor/actions/workflows/cd.yml)
+
 > Truth-first resume tailoring engine - compiles verified experience into job-targeted resumes with zero hallucinations.
 
 Built for **SwampHacks XI** | Using **Gemini API** (MLH), **MongoDB Atlas** (MLH), **DigitalOcean** (MLH)
