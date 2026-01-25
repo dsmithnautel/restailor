@@ -50,7 +50,7 @@ CRITICAL RULES:
 3. Do NOT merge multiple bullets into one
 4. If dates are unclear, use null
 5. Extract EVERY bullet point, even short ones
-6. For skills section, create one skill_group per category
+6. For skills section, create one skill_group per category. Put the category name (e.g. "Languages", "Frameworks") in the "org" field.
 7. Include header info (name, contact) as type "header", section "header"
 8. Recognize ALL sections, not just standard ones
 

@@ -114,8 +114,8 @@ async def parse_job_description(url: str | None = None, text: str | None = None)
 
     return ParsedJD(
         jd_id=jd_id,
-        role_title=result.get("role_title", "Unknown"),
-        company=result.get("company", "Unknown"),
+        role_title=result.get("role_title") or "Unknown",
+        company=result.get("company") or "Unknown",
         must_haves=result.get("must_haves", []),
         nice_to_haves=result.get("nice_to_haves", []),
         responsibilities=result.get("responsibilities", []),
