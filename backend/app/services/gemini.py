@@ -5,6 +5,7 @@ import json
 import re
 
 from google import genai
+from google.genai import errors as genai_errors
 
 from app.config import get_settings
 
@@ -13,7 +14,7 @@ _client = None
 # Rate limiting: Gemini free tier allows ~15 requests/minute
 # We'll be conservative and add delays between requests
 RATE_LIMIT_DELAY = 4.0  # seconds between requests
-_last_request_time = 0
+_last_request_time: float = 0.0
 
 
 def get_gemini_client():
