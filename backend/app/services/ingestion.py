@@ -50,7 +50,7 @@ CRITICAL RULES:
 3. Do NOT merge multiple bullets into one
 4. If dates are unclear, use null
 5. Extract EVERY bullet point, even short ones
-6. For skills section, create one skill_group per category
+6. For skills section, create one skill_group per category. Put the category name (e.g. "Languages", "Frameworks") in the "org" field.
 7. Include header info (name, contact) as type "header", section "header"
 8. Recognize ALL sections, not just standard ones
 
@@ -149,8 +149,12 @@ async def ingest_pdf(pdf_content: bytes, filename: str) -> MasterResumeResponse:
     doc = fitz.open(stream=pdf_content, filetype="pdf")
     full_text = ""
     for page_num, page in enumerate(doc):
-        full_text += f"\n--- Page {page_num + 1} ---\n"
-        full_text += page.get_text()
+        text = page.get_text()
+        # Basic cleaning: remove null bytes and normalize whitespace
+        text = text.replace("\0", "").strip()
+        if text:
+            full_text += f"\n--- Page {page_num + 1} ---\n"
+            full_text += text
     doc.close()
 
     if not full_text.strip():

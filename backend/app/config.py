@@ -10,7 +10,13 @@ from pydantic_settings import BaseSettings
 
 def parse_cors_origins() -> list[str]:
     """Parse CORS_ORIGINS from environment, handling various formats."""
-    default = ["http://localhost:3000", "http://localhost:3001", "https://restailor.vercel.app"]
+    default = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://restailor.vercel.app",
+        "https://www.resmatch.app",
+        "https://resmatch.app",
+    ]
 
     raw = os.environ.get("CORS_ORIGINS", "")
     if not raw:
@@ -68,7 +74,7 @@ def validate_settings(settings: Settings) -> list[str]:
     # Check Gemini API key (required for core functionality)
     if not settings.gemini_api_key:
         errors.append(
-            "GEMINI_API_KEY is not set. " "Get one at https://aistudio.google.com/app/apikey"
+            "GEMINI_API_KEY is not set. Get one at https://aistudio.google.com/app/apikey"
         )
 
     # Check MongoDB URI (warn if using localhost in production)
