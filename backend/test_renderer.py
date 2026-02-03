@@ -18,8 +18,8 @@ from pathlib import Path
 # Add app to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
 
-from app.models import ScoredUnit
-from app.services.rendercv_mapper import map_to_rendercv_model
+from models import ScoredUnit
+from services.rendercv_mapper import map_to_rendercv_model
 
 
 def test_existing_yaml(compile_id: str = None):
