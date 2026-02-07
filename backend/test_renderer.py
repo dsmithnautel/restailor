@@ -202,7 +202,7 @@ def show_available_compiles():
     output_base = Path(__file__).parent / "output"
     folders = sorted([d for d in output_base.iterdir() if d.is_dir()],
                     key=lambda x: x.stat().st_mtime, reverse=True)
-    
+
     print("\n📁 Available compile folders:\n")
     for i, folder in enumerate(folders[:10], 1):
         has_yaml = (folder / "cv.yaml").exists()
