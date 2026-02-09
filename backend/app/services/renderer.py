@@ -1,25 +1,25 @@
+import json
 import os
 import re
 import shutil
 import subprocess
 
-import yaml
-
 from app.db.mongodb import get_database
 from app.models import ScoredUnit
-from app.services.rendercv_mapper import map_to_rendercv_model
+from app.services.gemini import generate_text
+from app.services.prompts import generate_latex_prompt
 
 
 async def render_resume(
     compile_id: str, selected_units: list[ScoredUnit], master_version_id: str
 ) -> str:
     """
-    Render resume using RenderCV (Jake's Resume / sb2nov theme).
+    Render resume using LLM-generated LaTeX (Jake's Resume).
 
     1. Get header info from master resume
-    2. Map atomic units to RenderCV YAML schema
-    3. Generate YAML file
-    4. Run 'rendercv render' to produce PDF
+    2. Group atomic units by section/role
+    3. Generate LaTeX using LLM
+    4. Compile LaTeX to PDF
     5. Return path to generated PDF
     """
     # Get header info from database
@@ -30,87 +30,144 @@ async def render_resume(
     header_units = [doc async for doc in header_cursor]
     header_info = extract_header_info(header_units)
 
+    # Prepare data for LLM
+    resume_data = prepare_resume_data(header_info, selected_units)
+    resume_json = json.dumps(resume_data, indent=2)
+
+    # Generate LaTeX Prompt
+    prompt = generate_latex_prompt(resume_json)
+
+    # Call Gemini to get LaTeX
+    try:
+        latex_content = await generate_text(prompt)
+        # Clean up code blocks if present
+        if latex_content.startswith("```latex"):
+            latex_content = latex_content.replace("```latex", "", 1)
+        elif latex_content.startswith("```tex"):
+            latex_content = latex_content.replace("```tex", "", 1)
+
+        if latex_content.startswith("```"):
+            latex_content = latex_content.replace("```", "", 1)
+
+        if latex_content.endswith("```"):
+            latex_content = latex_content[:-3]
+
+        latex_content = latex_content.strip()
+
+    except Exception as e:
+        raise RuntimeError(f"Failed to generate LaTeX from LLM: {e}")
+
     # Create output directory
     output_dir = os.path.abspath(f"output/{compile_id}")
     os.makedirs(output_dir, exist_ok=True)
 
-    # Map to RenderCV Data Model
-    cv_data = map_to_rendercv_model(selected_units, header_info)
+    # Save LaTeX file
+    tex_path = os.path.join(output_dir, "cv.tex")
+    with open(tex_path, "w", encoding="utf-8") as f:
+        f.write(latex_content)
 
-    # Save as YAML
-    yaml_path = os.path.join(output_dir, "cv.yaml")
-    with open(yaml_path, "w", encoding="utf-8") as f:
-        yaml.dump(cv_data, f, sort_keys=False, allow_unicode=True)
-
-    # Compile with RenderCV (Subprocess)
-    # rendercv creates an output folder named 'rendercv_output' usually
+    # Compile with pdflatex
+    # We run pdflatex twice to ensure formatting (though once might be enough for this simple template)
     try:
-        # We run it inside output_dir so artifacts stay there
-        cmd = ["rendercv", "render", "cv.yaml"]
+        # Check if pdflatex is available
+        if shutil.which("pdflatex") is None:
+            # Fallback logic could go here, but for now we expect a LaTeX environment
+            pass
 
-        with open("debug_renderer.log", "w") as log:
-            log.write(f"Starting RenderCV in {output_dir}\n")
-            log.write(f"YAML Path: {yaml_path}\n")
+        cmd = ["pdflatex", "-interaction=nonstopmode", "-output-directory", output_dir, tex_path]
 
-        result = subprocess.run(cmd, cwd=output_dir, capture_output=True, text=True, check=True)
-        print(f"RenderCV Output: {result.stdout}")
-        with open("debug_renderer.log", "a") as log:
-            log.write("RenderCV Success:\n")
+        with open(os.path.join(output_dir, "debug_renderer.log"), "w") as log:
+            log.write(f"Starting pdflatex in {output_dir}\n")
+            log.write(f"TeX Path: {tex_path}\n")
+
+        # Run 1
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        # Run 2 (optional, but good practice for layout)
+        # subprocess.run(cmd, capture_output=True, text=True, check=True)
+
+        print(f"pdflatex Output: {result.stdout}")
+        with open(os.path.join(output_dir, "debug_renderer.log"), "a") as log:
+            log.write("pdflatex Success:\n")
             log.write(result.stdout)
             log.write("\n")
 
     except subprocess.CalledProcessError as e:
-        print(f"RenderCV Failed: {e.stderr}")
-        with open("debug_renderer.log", "a") as log:
-            log.write("RenderCV FAILED:\n")
+        print(f"pdflatex Failed: {e.stderr}")
+        with open(os.path.join(output_dir, "debug_renderer.log"), "a") as log:
+            log.write("pdflatex FAILED:\n")
+            log.write(e.stdout)  # pdflatex often puts errors in stdout
             log.write(e.stderr)
             log.write("\n")
-            log.write(f"STDOUT: {e.stdout}\n")
-        raise RuntimeError(f"RenderCV compilation failed: {e.stderr}")
-
-    # Move/Rename output PDF
-    # RenderCV output structure: output_dir/rendercv_output/Name_CV.pdf
-    # We want it at output_dir/resume.pdf
+        raise RuntimeError(
+            f"LaTeX compilation failed. see {output_dir}/debug_renderer.log. Error: {e.stdout}"
+        )
+    except FileNotFoundError:
+        raise RuntimeError(
+            "pdflatex not found. Please install a LaTeX distribution (e.g., TeX Live, MacTeX, MiKTeX)."
+        )
 
     # Find the generated PDF
-    found_pdf = None
-    rendercv_out = os.path.join(output_dir, "rendercv_output")
-    if os.path.exists(rendercv_out):
-        for root, _dirs, files in os.walk(rendercv_out):
-            for file in files:
-                if file.endswith(".pdf"):
-                    found_pdf = os.path.join(root, file)
-                    break
-
+    # pdflatex should generate cv.pdf in output_dir
+    generated_pdf = os.path.join(output_dir, "cv.pdf")
     target_pdf = os.path.join(output_dir, "resume.pdf")
 
-    if found_pdf and os.path.exists(found_pdf):
-        shutil.move(found_pdf, target_pdf)
-        # Cleanup
-        shutil.rmtree(rendercv_out, ignore_errors=True)
+    if os.path.exists(generated_pdf):
+        shutil.move(generated_pdf, target_pdf)
         return target_pdf
     else:
-        raise FileNotFoundError(f"PDF not generated by RenderCV. Check logs in {output_dir}")
+        raise FileNotFoundError(f"PDF not generated. Check logs in {output_dir}")
+
+
+def prepare_resume_data(header_info: dict, units: list[ScoredUnit]) -> dict:
+    """
+    Organize flat list of atomic units into a structured dictionary.
+    """
+    data = {"header": header_info, "sections": {}}
+
+    # Group by section
+    for unit in units:
+        section = unit.section
+        # Lowercase section for consistency
+        section_key = section.lower() if section else "other"
+
+        if section_key not in data["sections"]:
+            data["sections"][section_key] = []
+
+        # We need to group bullets under their org/role/dates tuple
+        # This is a heuristic grouping
+
+        # Check if we can add to the last entry
+        added = False
+        if data["sections"][section_key]:
+            last_entry = data["sections"][section_key][-1]
+            if (
+                last_entry.get("org") == unit.org and last_entry.get("role") == unit.role
+                # Relax date check or verify if strict equality needed
+            ):
+                last_entry["bullets"].append(unit.text)
+                added = True
+
+        if not added:
+            # Create new entry
+            entry = {
+                "org": unit.org,
+                "role": unit.role,
+                "dates": unit.dates,  # Keep as dict or string
+                "bullets": [unit.text],
+            }
+            data["sections"][section_key].append(entry)
+
+    # Clean up dates format if needed (atomic unit dates can be dicts or None)
+    return data
 
 
 def extract_header_info(header_units: list[dict]) -> dict:
     """
     Extract name, email, phone, LinkedIn, GitHub from header units.
-    Aggregates text from all provided header units.
-
-    Args:
-        header_units: List of header atomic units from database
-
-    Returns:
-        Dictionary with extracted contact information
+    Prioritizes structured 'tags' from LLM, then falls back to regex on text.
     """
     if not header_units:
         return {}
-
-    # Combine text from all header units
-    # We join with newlines to ensure separation
-    full_text = "\n".join(unit.get("text", "") for unit in header_units)
-    lines = [line.strip() for line in full_text.split("\n") if line.strip()]
 
     info = {
         "name": "Your Name",  # Default if not found
@@ -120,68 +177,79 @@ def extract_header_info(header_units: list[dict]) -> dict:
         "github": "",
     }
 
-    if lines:
-        # Heuristic: The first non-empty line usually contains the name
-        # We assume the first unit's first line is the name if multiple units exist
-        # But if units are out of order, this might be tricky.
-        # Usually, MongoDB returns in insertion order (which matches extraction order).
-        info["name"] = lines[0]
+    # 1. Try extracted metadata from tags (New Ingestion)
+    full_text_parts = []
 
-    # Extract email (look for @ symbol)
-    # Improved regex to avoid matching things like "quoted@text" if possible, but keep simple
-    email_pattern = r"[\w\.-]+@[\w\.-]+\.\w+"
-    for line in lines:
-        # Search in the whole line
-        email_match = re.search(email_pattern, line)
-        if email_match:
-            info["email"] = email_match.group(0)
-            break
+    for unit in header_units:
+        # Accumulate text for fallback
+        if unit.get("text"):
+            full_text_parts.append(unit["text"])
+            # If prompt followed, first unit text is Name
+            if info["name"] == "Your Name":
+                info["name"] = unit["text"]
 
-    # Extract phone (look for phone number patterns)
-    # Improved regex to match common formats, avoid short numbers
-    phone_pattern = r"\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}"
-    for line in lines:
-        phone_match = re.search(phone_pattern, line)
-        if phone_match:
-            info["phone"] = phone_match.group(0).strip()
-            break
+        # Check tags
+        tags = unit.get("tags") or {}
+        if isinstance(tags, dict):
+            if tags.get("email"):
+                info["email"] = tags["email"]
+            if tags.get("phone"):
+                info["phone"] = tags["phone"]
+            if tags.get("linkedin"):
+                info["linkedin"] = tags["linkedin"]
+            if tags.get("github"):
+                info["github"] = tags["github"]
 
-    # Extract LinkedIn
-    for line in lines:
-        if "linkedin.com" in line.lower():
-            # Try to extract URL
-            url_match = re.search(r"https?://[^\s]+", line)
-            if url_match:
-                info["linkedin"] = url_match.group(0)
-            else:
-                # Construct URL if just the display text is present
-                # Clean up the line to get potential path
-                clean_line = line.replace("|", "").strip()
-                # Find the part that looks like linkedin.com/...
-                parts = clean_line.split()
-                for part in parts:
-                    if "linkedin.com" in part:
-                        info["linkedin"] = (
-                            f"https://{part}" if not part.startswith("http") else part
-                        )
-                        break
-            break
+    # 2. Regex Fallback (Old Ingestion or LLM miss)
+    full_text = "\n".join(full_text_parts)
+    lines = [line.strip() for line in full_text.split("\n") if line.strip()]
 
-    # Extract GitHub
-    for line in lines:
-        if "github.com" in line.lower():
-            # Try to extract URL
-            url_match = re.search(r"https?://[^\s]+", line)
-            if url_match:
-                info["github"] = url_match.group(0)
-            else:
-                # Construct URL if just the display text is present
-                clean_line = line.replace("|", "").strip()
-                parts = clean_line.split()
-                for part in parts:
-                    if "github.com" in part:
-                        info["github"] = f"https://{part}" if not part.startswith("http") else part
-                        break
-            break
+    # Extract email if missing
+    if not info["email"]:
+        email_pattern = r"[\w\.-]+@[\w\.-]+\.\w+"
+        for line in lines:
+            if match := re.search(email_pattern, line):
+                info["email"] = match.group(0)
+                break
+
+    # Extract phone if missing
+    if not info["phone"]:
+        phone_pattern = r"\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}"
+        for line in lines:
+            if match := re.search(phone_pattern, line):
+                info["phone"] = match.group(0).strip()
+                break
+
+    # Extract LinkedIn if missing
+    if not info["linkedin"]:
+        for line in lines:
+            if "linkedin.com" in line.lower():
+                if match := re.search(r"https?://[^\s]+", line):
+                    info["linkedin"] = match.group(0)
+                else:
+                    clean = line.replace("|", "").strip()
+                    for part in clean.split():
+                        if "linkedin.com" in part:
+                            info["linkedin"] = (
+                                f"https://{part}" if not part.startswith("http") else part
+                            )
+                            break
+                break
+
+    # Extract GitHub if missing
+    if not info["github"]:
+        for line in lines:
+            if "github.com" in line.lower():
+                if match := re.search(r"https?://[^\s]+", line):
+                    info["github"] = match.group(0)
+                else:
+                    clean = line.replace("|", "").strip()
+                    for part in clean.split():
+                        if "github.com" in part:
+                            info["github"] = (
+                                f"https://{part}" if not part.startswith("http") else part
+                            )
+                            break
+                break
 
     return info
