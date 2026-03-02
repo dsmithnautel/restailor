@@ -63,12 +63,12 @@ async def tailor_units_against_jd(
     2. Request REWORDED versions of each bullet
     3. Return ScoredUnit objects containing the tailored text
     """
-    # Filter to tailor-able units (bullets, projects)
-    # Education usually doesn't need rewriting, but projects/experience do.
-    tailorable = [u for u in units if u.get("type") in ["bullet", "project"]]
+    # Filter to tailor-able units (bullets, projects) — but NOT education bullets
+    # Education bullets (GPA, coursework) must be preserved verbatim
+    tailorable = [u for u in units if u.get("type") in ["bullet", "project"] and u.get("section", "").lower() != "education"]
 
-    # Education and Skill units - pass through as is
-    passthrough_units = [u for u in units if u.get("type") in ["education", "skill_group"]]
+    # Education and Skill units - pass through as is (includes education bullets like GPA/coursework)
+    passthrough_units = [u for u in units if u.get("type") in ["education", "skill_group"] or (u.get("type") == "bullet" and u.get("section", "").lower() == "education")]
 
     if not tailorable and not passthrough_units:
         return []

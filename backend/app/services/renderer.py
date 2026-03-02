@@ -36,6 +36,8 @@ def _format_resume_data(header_info: dict, units: list[dict]) -> str:
     sections: OrderedDict[str, list[dict]] = OrderedDict()
     for u in units:
         sec = (u.get("section") or "other").lower()
+        if sec == "other":
+            continue  # Drop content that doesn't map to a Jake's template section
         if sec not in sections:
             sections[sec] = []
         sections[sec].append(u)
@@ -57,10 +59,19 @@ def _format_resume_data(header_info: dict, units: list[dict]) -> str:
 
         current_org = None
         current_role = None
+        last_edu_org = None  # Track last education org for grouping GPA/coursework
         for u in sec_units:
             org = u.get("org") or ""
             role = u.get("role") or ""
             dates = u.get("dates")
+
+            # For education section: inherit last-seen org if this unit has no org
+            # This groups GPA/coursework bullets under their parent college
+            if sec_name == "education":
+                if org:
+                    last_edu_org = org
+                elif not org and last_edu_org:
+                    org = last_edu_org
 
             if org != current_org or role != current_role:
                 current_org = org
@@ -73,16 +84,35 @@ def _format_resume_data(header_info: dict, units: list[dict]) -> str:
                 elif org:
                     header_line = org
 
-                if dates:
-                    date_str = _format_dates(dates)
-                    if date_str:
-                        header_line += f" | {date_str}"
+                # Only include dates if actually provided (never fabricate)
+                date_str = _format_dates(dates) if dates else ""
+                if date_str:
+                    header_line += f" | {date_str}"
+
+                # For projects: include technology/skill tags if present
+                if sec_name == "projects" and u.get("type") == "project":
+                    tags = u.get("tags") or {}
+                    skills = tags.get("skills", [])
+                    if skills:
+                        header_line += f" | {', '.join(skills)}"
 
                 if header_line:
                     parts.append(f"\n{header_line}")
 
             text = u.get("text", "")
             if text:
+                # For education bullets: only keep GPA and Relevant Coursework
+                # Drop everything else (e.g. "Member of:", club lists)
+                if sec_name == "education" and u.get("type") == "bullet":
+                    text_lower = text.lower().strip()
+                    if text_lower.startswith("gpa"):
+                        gpa_value = text.split(":", 1)[-1].strip() if ":" in text else text
+                        text = f"GPA: {gpa_value}"
+                    elif text_lower.startswith("relevant coursework"):
+                        cw_value = text.split(":", 1)[-1].strip() if ":" in text else text
+                        text = f"Relevant Coursework: {cw_value}"
+                    else:
+                        continue  # Skip non-GPA/coursework education bullets
                 parts.append(f"  - {text}")
 
         parts.append("")

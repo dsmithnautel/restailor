@@ -87,6 +87,10 @@ JAKES_TEMPLATE = r"""
     \resumeSubheading
       {Southwestern University}{Georgetown, TX}
       {Bachelor of Arts in Computer Science, Minor in Business}{Aug. 2018 -- May 2021}
+      \resumeItemListStart
+        \resumeItem{\textbf{GPA}: 3.8/4.0}
+        \resumeItem{\textbf{Relevant Coursework}: Data Structures, Algorithms, Software Engineering, Operating Systems}
+      \resumeItemListEnd
     \resumeSubheading
       {Blinn College}{Bryan, TX}
       {Associate's in Liberal Arts}{Aug. 2014 -- May 2018}
@@ -153,7 +157,7 @@ JAKES_TEMPLATE = r"""
             \resumeItem{Used Celery and Redis for asynchronous tasks}
           \resumeItemListEnd
       \resumeProjectHeading
-          {\textbf{Simple Paintball} $|$ \emph{Spigot API, Java, Maven, TravisCI, Git}}{May 2018 -- May 2020}
+          {\textbf{Simple Paintball}}{}
           \resumeItemListStart
             \resumeItem{Developed a Minecraft server plugin to entertain kids during free time for a previous job}
             \resumeItem{Published plugin to websites gaining 2K+ downloads and an average 4.5/5-star review}
@@ -217,4 +221,9 @@ IMPORTANT: Do not add unnecessary or additional formatting beyond what is alread
 IMPORTANT: Provide ONLY the LaTeX output, no other text or comments.
 IMPORTANT: Any given position or activity must only be listed in a single section. Avoid repetition.
 IMPORTANT: Do NOT include \\input{{glyphtounicode}}, \\pdfgentounicode=1, or any font option packages (FiraSans, roboto, noto-sans, sourcesanspro, CormorantGaramond, charter). These are not available in our compiler.
+IMPORTANT: Use ONLY the exact text provided in the resume data. Do NOT infer, expand, rephrase, or generate any content not explicitly present. Every bullet point must appear verbatim from the input.
+IMPORTANT: For ANY section (experience, projects, education, leadership, etc.), only include dates if they are explicitly provided in the resume data. If no dates are given, leave the date argument empty {{}}. NEVER fabricate or infer dates.
+IMPORTANT: For education entries, GPA and Relevant Coursework lines must be rendered as \\resumeItem bullets nested under their parent \\resumeSubheading using this exact format: \\resumeItem{{\\textbf{{GPA}}: 3.82/4.0}} and \\resumeItem{{\\textbf{{Relevant Coursework}}: Course1, Course2, ...}}. Do NOT rephrase, expand, or turn them into prose sentences.
+IMPORTANT: Do NOT add technology or skill tags (e.g. $|$ \\emph{{skills}}) to project or experience headings unless they are explicitly listed in the resume data. If the input data does not include a technology list next to a project name, render only the project name without any skills.
+IMPORTANT: When a date range ends with the current time, always use capitalized "Present" (e.g. "Sep. 2025 -- Present"), never lowercase "present".
 """
