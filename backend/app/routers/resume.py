@@ -177,13 +177,24 @@ async def rescore_bullets(request: RescoreRequest):
         raise HTTPException(status_code=404, detail=f"JD {request.jd_id} not found")
     parsed_jd = ParsedJD(**jd_doc)
 
+    # Collect all keywords from strategic pillars (or fall back to legacy)
     bullets_json = [{"id": b.id, "text": b.text} for b in request.bullets]
+    all_keywords = []
+    pillars_context = ""
+    for pillar in parsed_jd.strategic_pillars:
+        all_keywords.extend(pillar.keywords)
+        pillars_context += f"Priority {pillar.priority} — {pillar.pillar_name}: {pillar.context}\n"
+    if not all_keywords:
+        all_keywords = parsed_jd.keywords  # Legacy fallback
 
     prompt = f"""Score each resume bullet for relevance to this job. Do NOT rewrite — only score.
 
 JOB: {parsed_jd.role_title} at {parsed_jd.company}
+MISSION: {parsed_jd.business_mission or 'not specified'}
+STRATEGIC PRIORITIES:
+{pillars_context or 'Not specified'}
 REQUIREMENTS: {', '.join(parsed_jd.must_haves)}
-KEYWORDS: {', '.join(parsed_jd.keywords)}
+KEYWORDS: {', '.join(all_keywords)}
 
 BULLETS:
 {json.dumps(bullets_json)}

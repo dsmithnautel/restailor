@@ -10,7 +10,7 @@ from app.models.compile import (
     Provenance,
     ScoredUnit,
 )
-from app.models.job_description import JDParseRequest, ParsedJD
+from app.models.job_description import JDParseRequest, ParsedJD, StrategicPillar
 from app.models.master_resume import MasterResumeResponse, MasterVersion
 
 __all__ = [

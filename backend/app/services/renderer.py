@@ -100,6 +100,8 @@ def _format_resume_data(header_info: dict, units: list[dict]) -> str:
                     parts.append(f"\n{header_line}")
 
             text = u.get("text", "")
+            # Clean embedded newlines from PDF extraction (e.g. "Algorithm Abstraction\nand Analysis")
+            text = text.replace("\n", " ").strip()
             if text:
                 # For education bullets: only keep GPA and Relevant Coursework
                 # Drop everything else (e.g. "Member of:", club lists)
@@ -138,7 +140,11 @@ def _format_dates(dates: dict | str | None) -> str:
             return f"{months[m]} {p[0]}"
         return d
     start = fmt(dates.get("start"))
-    end = fmt(dates.get("end")) if dates.get("end") else "Present"
+    end = fmt(dates.get("end"))
+    # Only use "Present" if there IS a start date but no end date (ongoing entry)
+    # If both are empty, return nothing — don't fabricate dates
+    if start and not end:
+        end = "Present"
     if start and end:
         return f"{start} -- {end}"
     return start or end
