@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
@@ -29,6 +30,7 @@ import {
   type AtomicUnit,
   type MasterResumeResponse,
 } from "@/lib/api";
+import { useAuth } from "@/components/auth-provider";
 
 // Progress steps for the pipeline
 const steps = [
@@ -220,11 +222,20 @@ function BulletCard({
 }
 
 export default function VaultPage() {
+  const router = useRouter();
+  const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<MasterResumeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const shouldReduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (authLoading || profileLoading) return;
+    if (user && !profile?.onboardingCompleted) {
+      router.replace("/onboarding");
+    }
+  }, [authLoading, profileLoading, user, profile, router]);
 
   const handleFileSelect = async (file: File) => {
     // Single file callback - handled by onFilesSelect instead
