@@ -50,3 +50,8 @@ output/
 # Misc
 *.bak
 *.tmp
+
+# Test output and coverage
+test_out.txt
+test_results.txt
+coverage.xml

@@ -47,26 +47,22 @@ async def test_render_resume_success():
     mock_cursor.__aiter__.return_value = [{"text": "John Doe", "type": "header"}]
     mock_db.atomic_units.find.return_value = mock_cursor
 
-    mock_cv_data = {"cv": {"name": "John Doe"}}
-
     with (
         patch("app.services.renderer.get_database", return_value=mock_db),
-        patch("app.services.renderer.map_to_rendercv_model", return_value=mock_cv_data),
-        patch("os.makedirs"),
-        patch("builtins.open", MagicMock()),
-        patch("yaml.dump"),
-        patch("subprocess.run") as mock_run,
-        patch("os.path.exists", return_value=True),
-        patch("os.walk", return_value=[("/tmp/out", [], ["John_Doe_CV.pdf"])]),
-        patch("shutil.move") as mock_move,
-        patch("shutil.rmtree"),
+        patch(
+            "app.services.renderer.generate_text",
+            new_callable=AsyncMock,
+            return_value="LaTeX content",
+        ),
+        patch("app.services.renderer.os.makedirs"),
+        patch("builtins.open"),
+        patch("app.services.renderer.subprocess.run") as mock_run,
+        patch("app.services.renderer.os.path.exists", return_value=True),
+        patch("app.services.renderer.shutil.move") as mock_move,
     ):
         mock_run.return_value = MagicMock(stdout="Success", stderr="")
 
-        # Simulate PDF finding logic
-        # We need to control os.path.exists and os.walk to find the PDF
-        with patch("app.services.renderer.os.path.exists", side_effect=[True, True, True, True]):
-            result = await render_resume(compile_id, selected_units, master_version_id)
+        result = await render_resume(compile_id, selected_units, master_version_id)
 
     assert "resume.pdf" in result
     mock_run.assert_called_once()
@@ -87,13 +83,11 @@ async def test_render_resume_failure():
 
     with (
         patch("app.services.renderer.get_database", return_value=mock_db),
-        patch("os.makedirs"),
-        patch("builtins.open", MagicMock()),
-        patch("subprocess.run") as mock_run,
+        patch(
+            "app.services.renderer.generate_text",
+            new_callable=AsyncMock,
+            side_effect=Exception("API error"),
+        ),
     ):
-        import subprocess
-
-        mock_run.side_effect = subprocess.CalledProcessError(1, "cmd", stderr="LaTeX error")
-
-        with pytest.raises(RuntimeError, match="RenderCV compilation failed"):
+        with pytest.raises(RuntimeError, match="Failed to generate LaTeX from LLM"):
             await render_resume(compile_id, selected_units, "v1")

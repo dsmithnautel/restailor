@@ -186,7 +186,7 @@ def extract_header_info(header_units: list[dict]) -> dict:
             full_text_parts.append(unit["text"])
             # If prompt followed, first unit text is Name
             if info["name"] == "Your Name":
-                info["name"] = unit["text"]
+                info["name"] = unit["text"].split("\n")[0].strip()
 
         # Check tags
         tags = unit.get("tags") or {}
