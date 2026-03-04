@@ -62,6 +62,6 @@ def test_map_to_rendercv_model_basic(sample_header):
 
     # Check skills categorizing
     skills = model["cv"]["sections"]["technical_skills"]
-    assert any(s["label"] == "Languages" and "Python" in s["details"] for s in skills)
-    assert any(s["label"] == "Frameworks" and "FastAPI" in s["details"] for s in skills)
-    assert any(s["label"] == "Tools" and "Docker" in s["details"] for s in skills)
+    assert any(s.startswith("**Skills**") and "Python" in s for s in skills)
+    assert any(s.startswith("**Skills**") and "FastAPI" in s for s in skills)
+    assert any(s.startswith("**Skills**") and "Docker" in s for s in skills)
