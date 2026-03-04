@@ -53,7 +53,7 @@ async def test_parse_job_url(async_client, mock_services):
     # Mock services
     mock_services["parse_job_description"].return_value = mock_jd
 
-    # Mock DB
+    # Mock DB via mock_services (patches app.routers.job.get_database)
     mock_db = MagicMock()
     mock_services["job_db"].return_value = mock_db
     mock_db.parsed_jds.insert_one = AsyncMock()
@@ -67,12 +67,11 @@ async def test_parse_job_url(async_client, mock_services):
 @pytest.mark.asyncio
 async def test_compile_resume(async_client, mock_services):
     """Test the resume compilation endpoint."""
-    # Mock DB
+    # Mock DB via mock_services (patches app.routers.resume.get_database)
     mock_db = MagicMock()
     mock_services["resume_db"].return_value = mock_db
 
-    # Mock units cursor
-    # For async for, we need an async iterator
+    # Mock units cursor - need a proper async iterator for Python 3.11 compat
     class AsyncIterator:
         def __init__(self, items):
             self.items = items

@@ -48,7 +48,11 @@ async def test_render_resume_success():
     mock_db.atomic_units.find.return_value = mock_cursor
 
     with (
-        patch("app.services.renderer.get_database", return_value=mock_db),
+        patch(
+            "app.services.renderer.get_database",
+            new_callable=AsyncMock,
+            return_value=mock_db,
+        ),
         patch(
             "app.services.renderer.generate_text",
             new_callable=AsyncMock,
@@ -61,7 +65,6 @@ async def test_render_resume_success():
         patch("app.services.renderer.shutil.move") as mock_move,
     ):
         mock_run.return_value = MagicMock(stdout="Success", stderr="")
-
         result = await render_resume(compile_id, selected_units, master_version_id)
 
     assert "resume.pdf" in result
@@ -82,7 +85,7 @@ async def test_render_resume_failure():
     mock_db.atomic_units.find.return_value = mock_cursor
 
     with (
-        patch("app.services.renderer.get_database", return_value=mock_db),
+        patch("app.services.renderer.get_database", new_callable=AsyncMock, return_value=mock_db),
         patch(
             "app.services.renderer.generate_text",
             new_callable=AsyncMock,
