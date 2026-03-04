@@ -1,6 +1,12 @@
 "use client";
 
-import type { User } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  User,
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+} from "firebase/auth";
 import {
   createContext,
   useCallback,
@@ -30,6 +36,12 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function googleProvider() {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  return provider;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -39,8 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshProfile = useCallback(async () => {
     if (!isFirebaseConfigured) return;
 
-    const auth = await getFirebaseAuth();
-    const activeUser = auth.currentUser;
+    const activeUser = getFirebaseAuth().currentUser;
     if (!activeUser) {
       setProfile(null);
       return;
@@ -57,44 +68,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    let unsubscribe: (() => void) | undefined;
+    const auth = getFirebaseAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
+      setUser(nextUser);
+      setLoading(false);
 
-    (async () => {
-      const { onAuthStateChanged } = await import("firebase/auth");
-      const auth = await getFirebaseAuth();
-      unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
-        setUser(nextUser);
-        setLoading(false);
+      if (!nextUser) {
+        setProfile(null);
+        setProfileLoading(false);
+        return;
+      }
 
-        if (!nextUser) {
-          setProfile(null);
-          setProfileLoading(false);
-          return;
+      setProfileLoading(true);
+
+      try {
+        const ensuredProfile = await upsertUserProfile(nextUser);
+        if (ensuredProfile) {
+          setProfile(ensuredProfile);
         }
 
-        setProfileLoading(true);
-
-        try {
-          const ensuredProfile = await upsertUserProfile(nextUser);
-          if (ensuredProfile) {
-            setProfile(ensuredProfile);
-          }
-
-          const freshProfile = await getUserProfile(nextUser.uid);
-          if (freshProfile) {
-            setProfile(freshProfile);
-          }
-        } catch (error) {
-          console.error("Failed to sync user profile:", error);
-        } finally {
-          setProfileLoading(false);
+        const freshProfile = await getUserProfile(nextUser.uid);
+        if (freshProfile) {
+          setProfile(freshProfile);
         }
-      });
-    })();
+      } catch (error) {
+        console.error("Failed to sync user profile:", error);
+      } finally {
+        setProfileLoading(false);
+      }
+    });
 
-    return () => {
-      unsubscribe?.();
-    };
+    return () => unsubscribe();
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -109,11 +113,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isFirebaseConfigured) {
           throw new Error("Firebase is not configured.");
         }
-        const { GoogleAuthProvider, signInWithPopup } = await import("firebase/auth");
-        const auth = await getFirebaseAuth();
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: "select_account" });
-        const credential = await signInWithPopup(auth, provider);
+        const auth = getFirebaseAuth();
+        const credential = await signInWithPopup(auth, googleProvider());
         const ensuredProfile = await upsertUserProfile(credential.user);
         if (ensuredProfile) {
           setProfile(ensuredProfile);
@@ -122,9 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       signOutUser: async () => {
         if (!isFirebaseConfigured) return;
-        const { signOut } = await import("firebase/auth");
-        const auth = await getFirebaseAuth();
-        await signOut(auth);
+        await signOut(getFirebaseAuth());
         setProfile(null);
       },
     }),
