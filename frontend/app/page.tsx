@@ -295,11 +295,9 @@ function HomeContent() {
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </Link>
                   </Button>
-                  {!user && (
-                    <Button variant="outline" size="lg" asChild>
-                      <Link href="/sign-in?next=/vault">Sign in options</Link>
-                    </Button>
-                  )}
+                  <Button variant="outline" size="lg" asChild>
+                    <Link href="/vault">Try a demo</Link>
+                  </Button>
                 </motion.div>
 
                 {/* Trust Points */}
@@ -409,79 +407,6 @@ function HomeContent() {
           </div>
         </section>
 
-        {/* How It Works */}
-        <section id="how-it-works" className="py-12 px-6 bg-muted/20">
-          <div className="container">
-            <AnimatedSection className="text-center mb-6">
-              <h2 className="text-h2 text-foreground">How it works</h2>
-              <p className="mt-2 text-body-sm text-muted-foreground max-w-2xl mx-auto">
-                Upload your resume, paste a job description, download your tailored version.
-              </p>
-            </AnimatedSection>
-
-            {/* Horizontal Steps */}
-            <AnimatedSection delay={0.1}>
-              <div className="max-w-4xl mx-auto">
-                <div className="flex flex-col md:flex-row items-start justify-between gap-4">
-                  {/* Step 1: Upload */}
-                  <div className="flex items-start">
-                    <div className="flex flex-col items-center text-center w-[140px]">
-                      <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground mb-2">
-                        <FileText className="w-5 h-5" />
-                      </div>
-                      <h3 className="font-semibold text-foreground text-sm h-10 flex items-center">Upload resume</h3>
-                      <p className="text-xs text-muted-foreground leading-tight">
-                        We extract your experience
-                      </p>
-                    </div>
-                    <ChevronRight className="hidden md:block w-5 h-5 text-muted-foreground/40 mt-3.5 mx-4 flex-shrink-0" />
-                  </div>
-
-                  {/* Step 2: Paste */}
-                  <div className="flex items-start">
-                    <div className="flex flex-col items-center text-center w-[140px]">
-                      <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground mb-2">
-                        <Target className="w-5 h-5" />
-                      </div>
-                      <h3 className="font-semibold text-foreground text-sm h-10 flex items-center">Paste job description</h3>
-                      <p className="text-xs text-muted-foreground leading-tight">
-                        Copy from any posting
-                      </p>
-                    </div>
-                    <ChevronRight className="hidden md:block w-5 h-5 text-muted-foreground/40 mt-3.5 mx-4 flex-shrink-0" />
-                  </div>
-
-                  {/* Step 3: Review */}
-                  <div className="flex items-start">
-                    <div className="flex flex-col items-center text-center w-[140px]">
-                      <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground mb-2">
-                        <Sparkles className="w-5 h-5" />
-                      </div>
-                      <h3 className="font-semibold text-foreground text-sm h-10 flex items-center">Review matches</h3>
-                      <p className="text-xs text-muted-foreground leading-tight">
-                        See what fits each role
-                      </p>
-                    </div>
-                    <ChevronRight className="hidden md:block w-5 h-5 text-muted-foreground/40 mt-3.5 mx-4 flex-shrink-0" />
-                  </div>
-
-                  {/* Step 4: Export */}
-                  <div className="flex items-start">
-                    <div className="flex flex-col items-center text-center w-[140px]">
-                      <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground mb-2">
-                        <Download className="w-5 h-5" />
-                      </div>
-                      <h3 className="font-semibold text-foreground text-sm h-10 flex items-center">Export PDF</h3>
-                      <p className="text-xs text-muted-foreground leading-tight">
-                        Download tailored resume
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </AnimatedSection>
-          </div>
-        </section>
 
         {/* Examples Section */}
         <section className="py-section-lg px-6">
@@ -649,14 +574,8 @@ function HomeContent() {
 
               {/* Links */}
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                <Link
-                  href="#how-it-works"
-                  className="hover:text-foreground transition-colors"
-                >
-                  How it works
-                </Link>
                 <a
-                  href="https://github.com/dsmithnautel/resmatch"
+                  href="https://github.com/dsmithnautel/resmatch#readme"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground transition-colors"
