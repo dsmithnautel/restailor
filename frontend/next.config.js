@@ -10,6 +10,13 @@ const nextConfig = {
     '@firebase/component',
     '@firebase/logger',
   ],
+  turbopack: {
+    resolveAlias: {
+      'firebase/app': 'firebase/app/dist/esm/index.esm.js',
+      'firebase/auth': 'firebase/auth/dist/esm/index.esm.js',
+      'firebase/firestore': 'firebase/firestore/dist/esm/index.esm.js',
+    },
+  },
 }
 
 module.exports = nextConfig

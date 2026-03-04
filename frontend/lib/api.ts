@@ -18,7 +18,7 @@ export async function fetchWithAuth(
   };
 
   if (isFirebaseConfigured) {
-    const auth = await getFirebaseAuth();
+    const auth = getFirebaseAuth();
     const token = await auth.currentUser?.getIdToken();
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
