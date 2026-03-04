@@ -1,5 +1,5 @@
-import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
+import type { FirebaseApp } from "firebase/app";
+import type { Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,16 +12,26 @@ const firebaseConfig = {
 
 export const isFirebaseConfigured = Boolean(
   firebaseConfig.apiKey &&
-    firebaseConfig.authDomain &&
-    firebaseConfig.projectId &&
-    firebaseConfig.appId,
+  firebaseConfig.authDomain &&
+  firebaseConfig.projectId &&
+  firebaseConfig.appId,
 );
 
-function getFirebaseApp(): FirebaseApp {
-  if (getApps().length > 0) return getApp();
-  return initializeApp(firebaseConfig);
+let cachedApp: FirebaseApp | null = null;
+
+async function getFirebaseApp(): Promise<FirebaseApp> {
+  if (cachedApp) return cachedApp;
+  const { initializeApp, getApps, getApp } = await import("firebase/app");
+  cachedApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  return cachedApp;
 }
 
-export function getFirebaseAuth(): Auth {
-  return getAuth(getFirebaseApp());
+let cachedAuth: Auth | null = null;
+
+export async function getFirebaseAuth(): Promise<Auth> {
+  if (cachedAuth) return cachedAuth;
+  const app = await getFirebaseApp();
+  const { getAuth } = await import("firebase/auth");
+  cachedAuth = getAuth(app);
+  return cachedAuth;
 }

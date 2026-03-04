@@ -1,12 +1,4 @@
-import {
-  doc,
-  getDoc,
-  setDoc,
-  serverTimestamp,
-  type Timestamp,
-} from "firebase/firestore";
-import { getFirestore } from "firebase/firestore";
-import { getApp } from "firebase/app";
+import type { Timestamp } from "firebase/firestore";
 import type { User } from "firebase/auth";
 
 export type UserPreferences = {
@@ -28,18 +20,24 @@ export type UserProfile = {
   updatedAt: Timestamp | null;
 };
 
-function getDb() {
+async function getDb() {
+  const { getApp } = await import("firebase/app");
+  const { getFirestore } = await import("firebase/firestore");
   return getFirestore(getApp());
 }
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
-  const snap = await getDoc(doc(getDb(), "users", uid));
+  const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
+  const snap = await getDoc(doc(db, "users", uid));
   if (!snap.exists()) return null;
   return snap.data() as UserProfile;
 }
 
 export async function upsertUserProfile(user: User): Promise<UserProfile | null> {
-  const ref = doc(getDb(), "users", user.uid);
+  const { doc, getDoc, setDoc, serverTimestamp } = await import("firebase/firestore");
+  const db = await getDb();
+  const ref = doc(db, "users", user.uid);
   const snap = await getDoc(ref);
 
   if (snap.exists()) {
@@ -71,7 +69,9 @@ export async function completeUserOnboarding(
   user: User,
   data: { fullName: string; preferences: UserPreferences },
 ): Promise<void> {
-  const ref = doc(getDb(), "users", user.uid);
+  const { doc, setDoc, serverTimestamp } = await import("firebase/firestore");
+  const db = await getDb();
+  const ref = doc(db, "users", user.uid);
   await setDoc(
     ref,
     {
