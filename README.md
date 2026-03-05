@@ -6,8 +6,6 @@
 
 > Truth-first resume tailoring engine - compiles verified experience into job-targeted resumes with zero hallucinations.
 
-**[Live Demo](https://restailor.vercel.app)** | **[Demo Video](https://youtu.be/YOUR_VIDEO_ID)** *(replace with actual link)*
-
 Built for **SwampHacks XI** | Using **Gemini API** (MLH), **MongoDB Atlas** (MLH), **DigitalOcean** (MLH)
 
 ## Overview
@@ -16,10 +14,18 @@ ResMatch treats your resume like source code and job descriptions like build tar
 
 1. **Extracts** every bullet point from your master resume as verified "atomic units"
 2. **Parses** job descriptions to identify requirements and keywords
-3. **Scores** your experience against the JD using LLM-direct scoring
-4. **Compiles** the best-matching bullets into a one-page, tailored PDF
+3. **Tailors** each bullet by rewriting it to highlight relevance to the JD — without fabricating anything
+4. **Compiles** all tailored bullets into a professional PDF with full provenance
 
 **Key guarantee**: Every output bullet traces back to your original resume. Nothing is fabricated.
+
+## Features
+
+- **PDF Resume Ingestion** — Upload your master resume and extract atomic units
+- **Job Description Parsing** — Parse a JD from URL or pasted text
+- **LLM-Direct Tailoring** — Rewrite bullets to highlight JD relevance using Gemini, without fabricating anything
+- **Resume Compilation** — Compile a tailored resume with full provenance tracking
+- **PDF Export** — Generate a professional, ATS-ready PDF via LaTeX
 
 ## Tech Stack
 
@@ -28,7 +34,7 @@ ResMatch treats your resume like source code and job descriptions like build tar
 | Frontend | Next.js <!-- NEXTJS_VERSION_START -->16.1.6<!-- NEXTJS_VERSION_END --> | React app with App Router |
 | Styling | Tailwind CSS <!-- TAILWIND_VERSION_START -->3.4.1<!-- TAILWIND_VERSION_END --> + shadcn/ui | Modern UI components |
 | Backend | FastAPI <!-- FASTAPI_VERSION_START -->0.109.0<!-- FASTAPI_VERSION_END --> | Python async API |
-| AI | Google Gemini API | Extraction + LLM scoring |
+| AI | Google Gemini API | Extraction + LLM tailoring |
 | Database | MongoDB Atlas | Document storage |
 | Hosting | DigitalOcean | Backend deployment |
 | PDF | RenderCV | LaTeX resume generation |
@@ -84,11 +90,15 @@ Visit `http://localhost:3000` to use the app.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/master/ingest` | Upload master resume PDF |
-| GET | `/master/{version_id}` | Get atomic units |
-| POST | `/job/parse` | Parse job description |
+| GET | `/master/{version_id}` | Get atomic units for a version |
+| PUT | `/master/{version_id}/units/{unit_id}` | Update an atomic unit |
+| DELETE | `/master/{version_id}/units/{unit_id}` | Delete an atomic unit |
+| POST | `/job/parse` | Parse job description from URL or text |
+| GET | `/job/{jd_id}` | Get a previously parsed JD |
 | POST | `/resume/compile` | Compile tailored resume |
 | GET | `/resume/{compile_id}` | Get compile results |
 | GET | `/resume/{compile_id}/pdf` | Download PDF |
+| GET | `/resume/{compile_id}/provenance` | Get full provenance JSON |
 
 ## How It Works
 
@@ -109,33 +119,28 @@ Paste a job description URL or text. Gemini extracts:
 - Key responsibilities
 - Technical keywords
 
-### 3. LLM Scoring
+### 3. LLM Tailoring
 
-Each atomic unit is scored against the JD:
-- Score (0-10) indicating relevance
-- Matched requirements
-- Reasoning for the score
+Each atomic unit is sent to Gemini along with the parsed JD. Gemini rewrites each bullet to:
+- Use active voice and strong action verbs
+- Incorporate JD keywords naturally where honest
+- Improve clarity and impact without changing core facts
+- Preserve the original meaning — nothing is fabricated
 
-We use **LLM-direct scoring** (not vector search) because:
+Each rewritten bullet also receives a relevance score (0–10) for transparency.
+
+We use **LLM-direct tailoring** (not vector search) because:
 - ~30-50 atomic units fit easily in context
-- Gemini can reason holistically about fit
+- Gemini can reason holistically about fit and rewrite intelligently
 - Simpler architecture, no embedding overhead
 
-### 4. Optimization
+### 4. Rendering
 
-Greedy selection under constraints:
-- Max bullets per section
-- One-page character budget
-- Diversity (max 2 bullets per role)
-- Must-have coverage prioritization
-
-### 5. Rendering
-
-Selected bullets are compiled via RenderCV into a professional PDF. Full provenance JSON is generated.
+All tailored bullets are compiled via RenderCV into a professional PDF. Full provenance JSON is generated alongside it.
 
 ## Hackathon Challenges
 
-- **Best Use of Gemini API** - Core extraction + scoring
+- **Best Use of Gemini API** - Core extraction + LLM tailoring
 - **Best Use of MongoDB Atlas** - Document storage
 - **Best Use of DigitalOcean** - Backend hosting
 - **GitHub "Ship It"** - PRs, issues, releases
@@ -224,9 +229,9 @@ Selected bullets are compiled via RenderCV into a professional PDF. Full provena
 
 ## Frequently Asked Questions (FAQ)
 
-### How does ResMatch ensure zero hallucinations?
+### How is ResMatch different from ChatGPT resume help?
 
-We only use content that already exists in your uploaded resume. Every bullet point in your tailored resume can be traced back to an exact line in your original document. We never generate, invent, or embellish any experience.
+ChatGPT and similar tools can fabricate experience or embellish your background. ResMatch enforces a strict truth constraint—we only use content that already exists in your uploaded resume. Every bullet point in your tailored resume can be traced back to an exact line in your original document. We never generate, invent, or embellish any experience. No hallucinations and no invented metrics.
 
 ### What does 'source tracking' mean?
 
@@ -243,6 +248,34 @@ We currently support PDF uploads. The exported tailored resume is also delivered
 ### Is ResMatch really free?
 
 Yes. ResMatch is free and open source. You can view the source code on GitHub and even self-host if you prefer.
+
+### How long does it take to generate a tailored resume?
+
+Typically under a minute. The process involves extracting your resume content, parsing the job description, scoring and tailoring each bullet, and compiling the final PDF.
+
+### Can I edit the tailored resume before exporting?
+
+Yes. After the tailoring step, you can review all matched bullets, toggle individual items on or off, and adjust relevance before generating your final PDF.
+
+### What is a relevance score?
+
+Each bullet receives a score from 0–10 indicating how well it matches the job requirements. Higher scores mean stronger alignment with the JD keywords and responsibilities.
+
+### Will the tailored resume pass ATS systems?
+
+Yes. The exported PDF uses a clean, single-column LaTeX template designed to be parsed correctly by Applicant Tracking Systems. No fancy graphics or multi-column layouts that confuse ATS parsers.
+
+### Can I tailor the same resume for multiple jobs?
+
+Absolutely. Upload your master resume once, then paste different job descriptions to generate a uniquely tailored version for each role.
+
+### What happens to my resume data?
+
+Your resume is processed to extract bullet points and stored temporarily for the session. We do not sell or share your data. For maximum privacy, you can self-host the application.
+
+### What if my resume has multiple pages?
+
+ResMatch handles multi-page PDFs. All content is extracted and parsed regardless of length, though we recommend keeping resumes concise (1 page) for best results.
 
 ## Team
 
