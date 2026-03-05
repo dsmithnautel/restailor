@@ -366,30 +366,30 @@ export default function Home() {
             >
               <motion.div variants={fadeInUp}>
                 <DifferentiatorCard
-                  icon={<Target className="w-5 h-5" />}
-                  title="Match job requirements"
-                  description="Highlight the experience that matters most for each specific role."
+                  icon={<FileText className="w-5 h-5" />}
+                  title="Ingest your resume"
+                  description="Upload your master resume PDF and extract every bullet as a verified atomic unit."
                 />
               </motion.div>
               <motion.div variants={fadeInUp}>
                 <DifferentiatorCard
-                  icon={<FileText className="w-5 h-5" />}
-                  title="Works with projects"
-                  description="No work experience? Projects and skills count just as much."
+                  icon={<Target className="w-5 h-5" />}
+                  title="Parse any job description"
+                  description="Paste a JD or a URL — we extract requirements, keywords, and must-haves automatically."
                 />
               </motion.div>
               <motion.div variants={fadeInUp}>
                 <DifferentiatorCard
                   icon={<Shield className="w-5 h-5" />}
                   title="Uses only real experience"
-                  description="We never make things up. Everything comes from your resume."
+                  description="LLM-direct scoring matches your bullets to the JD without fabricating anything."
                 />
               </motion.div>
               <motion.div variants={fadeInUp}>
                 <DifferentiatorCard
-                  icon={<Sparkles className="w-5 h-5" />}
-                  title="Save hours of work"
-                  description="Create tailored versions in minutes, not hours."
+                  icon={<Download className="w-5 h-5" />}
+                  title="Export as PDF"
+                  description="Get a compiled, ATS-ready PDF with full provenance tracking on every bullet."
                 />
               </motion.div>
             </motion.div>
@@ -564,7 +564,7 @@ export default function Home() {
               {/* Links */}
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
                 <a
-                  href="https://github.com/dsmithnautel/resmatch#readme"
+                  href="https://github.com/dsmithnautel/resmatch#frequently-asked-questions-faq"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground transition-colors"
