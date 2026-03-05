@@ -1,8 +1,8 @@
 # ResMatch
 
-[![CI](https://github.com/dsmithnautel/restailor/actions/workflows/ci.yml/badge.svg)](https://github.com/dsmithnautel/restailor/actions/workflows/ci.yml)
-[![CD](https://github.com/dsmithnautel/restailor/actions/workflows/cd.yml/badge.svg)](https://github.com/dsmithnautel/restailor/actions/workflows/cd.yml)
-[![GitHub release](https://img.shields.io/github/v/release/dsmithnautel/restailor)](https://github.com/dsmithnautel/restailor/releases)
+[![CI](https://github.com/dsmithnautel/resmatch/actions/workflows/ci.yml/badge.svg)](https://github.com/dsmithnautel/resmatch/actions/workflows/ci.yml)
+[![CD](https://github.com/dsmithnautel/resmatch/actions/workflows/cd.yml/badge.svg)](https://github.com/dsmithnautel/resmatch/actions/workflows/cd.yml)
+[![GitHub release](https://img.shields.io/github/v/release/dsmithnautel/resmatch)](https://github.com/dsmithnautel/resmatch/releases)
 
 > Truth-first resume tailoring engine - compiles verified experience into job-targeted resumes with zero hallucinations.
 
