@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Download, FileText, CheckCircle, Info, Loader2 } from "lucide-react";
+import { Download, FileText, CheckCircle, Info, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getCompileResult, getPdfUrl, type CompileResponse, type ScoredUnit, type Provenance } from "@/lib/api";
 
 export default function ReviewPage() {
@@ -36,8 +37,53 @@ export default function ReviewPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="container mx-auto py-8 px-4 space-y-6">
+        <div>
+          <Skeleton className="h-4 w-32 mb-4" />
+          <Skeleton className="h-9 w-64 mb-2" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i}>
+                  <Skeleton className="h-9 w-16 mx-auto mb-2" />
+                  <Skeleton className="h-4 w-24 mx-auto" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <div className="grid lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-40 mb-2" />
+              <Skeleton className="h-4 w-56" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="p-4 border rounded-lg">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6 mt-1" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-36 mb-2" />
+              <Skeleton className="h-4 w-48" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <Skeleton className="w-12 h-12 rounded-full mx-auto mb-4" />
+                <Skeleton className="h-4 w-64 mx-auto" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -67,23 +113,23 @@ export default function ReviewPage() {
         <Link href="/compile" className="text-blue-600 hover:underline text-sm mb-2 inline-block">
           &larr; Back to Job Description
         </Link>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
               Review & Export
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-2">
               Compile ID: {compileId}
             </p>
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline" asChild>
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <Button variant="outline" asChild className="w-full sm:w-auto">
               <a href={`/api/provenance/${compileId}`} download>
                 <FileText className="w-4 h-4 mr-2" />
                 Source Data (JSON)
               </a>
             </Button>
-            <Button asChild>
+            <Button asChild className="w-full sm:w-auto">
               <a href={getPdfUrl(compileId)} download>
                 <Download className="w-4 h-4 mr-2" />
                 Download PDF
@@ -96,9 +142,9 @@ export default function ReviewPage() {
       {/* Coverage Stats */}
       <Card className="mb-6">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600">
                 {result.selected_units.length}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-300">
@@ -106,7 +152,7 @@ export default function ReviewPage() {
               </div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-green-600">
+              <div className="text-2xl sm:text-3xl font-bold text-green-600">
                 {Math.round(result.coverage.coverage_score * 100)}%
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-300">
@@ -114,7 +160,7 @@ export default function ReviewPage() {
               </div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-purple-600">
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600">
                 {result.coverage.must_haves_matched}/{result.coverage.must_haves_total}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-300">
@@ -136,48 +182,57 @@ export default function ReviewPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 max-h-[600px] overflow-y-auto">
-              {result.selected_units.map((unit) => (
-                <div
-                  key={unit.unit_id}
-                  onClick={() => setSelectedUnit(unit)}
-                  className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                    selectedUnit?.unit_id === unit.unit_id
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                      : "hover:border-gray-400"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs capitalize">
-                        {unit.section}
-                      </span>
-                      {unit.org && (
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {unit.org}
+            {result.selected_units.length === 0 ? (
+              <div className="text-center py-12">
+                <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <p className="text-muted-foreground">
+                  No bullets matched this job description. Try uploading a more detailed resume or adjusting the job description.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                {result.selected_units.map((unit) => (
+                  <div
+                    key={unit.unit_id}
+                    onClick={() => setSelectedUnit(unit)}
+                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                      selectedUnit?.unit_id === unit.unit_id
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "hover:border-gray-400"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs capitalize">
+                          {unit.section}
                         </span>
-                      )}
+                        {unit.org && (
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {unit.org}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs font-medium ${
+                            unit.llm_score >= 8
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                              : unit.llm_score >= 6
+                              ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                              : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                          }`}
+                        >
+                          Score: {unit.llm_score.toFixed(1)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          unit.llm_score >= 8
-                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                            : unit.llm_score >= 6
-                            ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
-                        }`}
-                      >
-                        Score: {unit.llm_score.toFixed(1)}
-                      </span>
-                    </div>
+                    <p className="text-gray-800 dark:text-gray-200 text-sm">
+                      {unit.text}
+                    </p>
                   </div>
-                  <p className="text-gray-800 dark:text-gray-200 text-sm">
-                    {unit.text}
-                  </p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
