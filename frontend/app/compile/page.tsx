@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Loader2, Link as LinkIcon, FileText, AlertCircle } from "lucide-react";
+import { ArrowRight, Loader2, Link as LinkIcon, FileText, AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { parseJobDescription, compileResume, type ParsedJD, type CompileResponse } from "@/lib/api";
@@ -17,15 +17,44 @@ function CompilePageContent() {
   const [isParsingJD, setIsParsingJD] = useState(false);
   const [parsedJD, setParsedJD] = useState<ParsedJD | null>(null);
   const [isCompiling, setIsCompiling] = useState(false);
+  const [compileStep, setCompileStep] = useState(0);
   const [compileResult, setCompileResult] = useState<CompileResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isValidUrl, setIsValidUrl] = useState(true);
+  const stepTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Redirect if no master version
   useEffect(() => {
     if (!masterVersion) {
       // Could redirect to vault
     }
   }, [masterVersion]);
+
+  useEffect(() => {
+    if (isCompiling) {
+      setCompileStep(0);
+      stepTimerRef.current = setInterval(() => {
+        setCompileStep((prev) => (prev < 2 ? prev + 1 : prev));
+      }, 3000);
+    } else {
+      if (stepTimerRef.current) {
+        clearInterval(stepTimerRef.current);
+        stepTimerRef.current = null;
+      }
+      setCompileStep(0);
+    }
+    return () => {
+      if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+    };
+  }, [isCompiling]);
+
+  const handleUrlInputChange = (value: string) => {
+    setJdInput(value);
+    if (value.trim() === "") {
+      setIsValidUrl(true);
+    } else {
+      setIsValidUrl(/^https?:\/\/.+/.test(value.trim()));
+    }
+  };
 
   const handleParseJD = async () => {
     if (!jdInput.trim()) return;
@@ -93,7 +122,7 @@ function CompilePageContent() {
         <Link href="/vault" className="text-blue-600 hover:underline text-sm mb-2 inline-block">
           &larr; Back to Upload
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
           Add Job Description
         </h1>
         <p className="text-gray-600 dark:text-gray-300 mt-2">
@@ -126,11 +155,11 @@ function CompilePageContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Input Mode Toggle */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant={inputMode === "url" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setInputMode("url")}
+                onClick={() => { setInputMode("url"); setIsValidUrl(true); }}
                 className="gap-2"
               >
                 <LinkIcon className="w-4 h-4" />
@@ -139,7 +168,7 @@ function CompilePageContent() {
               <Button
                 variant={inputMode === "text" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setInputMode("text")}
+                onClick={() => { setInputMode("text"); setIsValidUrl(true); }}
                 className="gap-2"
               >
                 <FileText className="w-4 h-4" />
@@ -149,13 +178,24 @@ function CompilePageContent() {
 
             {/* Input Field */}
             {inputMode === "url" ? (
-              <input
-                type="url"
-                placeholder="https://careers.example.com/job/123"
-                value={jdInput}
-                onChange={(e) => setJdInput(e.target.value)}
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700"
-              />
+              <div>
+                <input
+                  type="url"
+                  placeholder="https://careers.example.com/job/123"
+                  value={jdInput}
+                  onChange={(e) => handleUrlInputChange(e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 dark:bg-gray-800 dark:border-gray-700 ${
+                    !isValidUrl
+                      ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                      : "focus:ring-blue-500 focus:border-blue-500"
+                  }`}
+                />
+                {!isValidUrl && (
+                  <p className="text-sm text-red-500 mt-1">
+                    Please enter a valid URL starting with http:// or https://
+                  </p>
+                )}
+              </div>
             ) : (
               <textarea
                 placeholder="Paste the full job description here..."
@@ -175,7 +215,7 @@ function CompilePageContent() {
 
             <Button
               onClick={handleParseJD}
-              disabled={!jdInput.trim() || isParsingJD}
+              disabled={!jdInput.trim() || isParsingJD || (inputMode === "url" && !isValidUrl)}
               className="w-full"
             >
               {isParsingJD ? (
@@ -256,7 +296,7 @@ function CompilePageContent() {
             </div>
           )}
 
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-4">
             <Button
               size="lg"
               onClick={handleCompile}
@@ -275,6 +315,37 @@ function CompilePageContent() {
                 </>
               )}
             </Button>
+
+            {isCompiling && (
+              <div className="w-full max-w-sm space-y-2 text-sm">
+                {[
+                  "Scoring bullets against job requirements...",
+                  "Optimizing selection...",
+                  "Generating PDF...",
+                ].map((label, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    {i < compileStep ? (
+                      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    ) : i === compileStep ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-500 flex-shrink-0" />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border border-muted-foreground/30 flex-shrink-0" />
+                    )}
+                    <span
+                      className={
+                        i < compileStep
+                          ? "text-green-600 line-through"
+                          : i === compileStep
+                          ? "text-foreground font-medium"
+                          : "text-muted-foreground"
+                      }
+                    >
+                      Step {i + 1}: {label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

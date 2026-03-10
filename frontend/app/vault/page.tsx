@@ -23,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FileUpload } from "@/components/file-upload";
 import {
   uploadResume,
@@ -287,7 +288,7 @@ export default function VaultPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
             Upload Your Resumes
           </h1>
           <p className="text-muted-foreground max-w-lg mx-auto">
@@ -350,6 +351,42 @@ export default function VaultPage() {
                 : `${selectedFiles.length} file${selectedFiles.length !== 1 ? "s" : ""} ready to process`
               }
             </p>
+
+            {isLoading && (
+              <div className="max-w-4xl mx-auto mt-8 space-y-6">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="w-10 h-10 rounded-full" />
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6 space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6" />
+                    <Skeleton className="h-4 w-4/6" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="text-center p-4 bg-muted/50 rounded-lg">
+                          <Skeleton className="h-8 w-12 mx-auto mb-2" />
+                          <Skeleton className="h-4 w-16 mx-auto" />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -512,11 +549,20 @@ export default function VaultPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-                  {result.atomic_units.map((unit, index) => (
-                    <BulletCard key={unit.id} unit={unit} index={index} />
-                  ))}
-                </div>
+                {result.atomic_units.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground">
+                      No content could be extracted from your resume. This may happen with scanned or image-based PDFs. Try uploading a text-based PDF.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                    {result.atomic_units.map((unit, index) => (
+                      <BulletCard key={unit.id} unit={unit} index={index} />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
