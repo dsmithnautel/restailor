@@ -43,7 +43,7 @@ jobs:
           perl -0777 -pi -e "s/(<!-- PROJECT_STRUCTURE_START -->).*?(<!-- PROJECT_STRUCTURE_END -->)/\$1\n$ESCAPED_TREE\n\$2/s" README.md
 
       - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "docs(readme): auto-update versions and project structure"
           file_pattern: "README.md"
